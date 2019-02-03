@@ -265,7 +265,7 @@ class NMT(nn.Module):
             Y_t = Y_t.squeeze(0)
             Ybar_t = torch.cat([Y_t, o_prev], dim=-1)
 
-            (h_t, cell_t), o_t, e_t = self.step(Ybar_t, dec_state,
+            dec_state, o_t, _ = self.step(Ybar_t, dec_state,
              enc_hiddens, enc_hiddens_proj, enc_masks)
             combined_outputs.append(o_t)
             o_prev = o_t
@@ -364,9 +364,8 @@ class NMT(nn.Module):
         ###     Tanh:
         ###         https://pytorch.org/docs/stable/torch.html#torch.tanh
 
-        alpha_t = nn.functional.softmax(e_t, dim=-1)
-        a_view = (e_t.size(0), 1, e_t.size(1))
-        a_t = torch.bmm(alpha_t.view(*a_view), enc_hiddens).squeeze(1)
+        alpha_t = nn.functional.softmax(e_t, dim=0)
+        a_t = torch.bmm(alpha_t.unsqueeze(1), enc_hiddens).squeeze(1)
         U_t = torch.cat([dec_hidden, a_t], 1)
         V_t = self.combined_output_projection(U_t)
         O_t = self.dropout(torch.tanh(V_t)) 
