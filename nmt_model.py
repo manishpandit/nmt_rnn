@@ -364,8 +364,12 @@ class NMT(nn.Module):
         ###     Tanh:
         ###         https://pytorch.org/docs/stable/torch.html#torch.tanh
 
-        alpha_t = nn.functional.softmax(e_t, dim=0)
-        a_t = torch.bmm(alpha_t.unsqueeze(1), enc_hiddens).squeeze(1)
+        alpha_t = nn.functional.softmax(e_t, dim=-1)
+        a_view = (e_t.size(0), 1, e_t.size(1))
+        a_t = torch.bmm(alpha_t.view(*a_view), enc_hiddens).squeeze(1)
+
+        #alpha_t = nn.functional.softmax(e_t, dim=0)
+        #a_t = torch.bmm(alpha_t.unsqueeze(1), enc_hiddens).squeeze(1)
         U_t = torch.cat([dec_hidden, a_t], 1)
         V_t = self.combined_output_projection(U_t)
         O_t = self.dropout(torch.tanh(V_t)) 
